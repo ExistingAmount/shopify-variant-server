@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>3D Box Visualizer</title>
+  <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+  <div id="canvas-container"></div>
+  
+  <div id="ui">
+    <div class="controls-container">
+      <div class="option-group">
+        <div class="option-group-title">Box Dimensions</div>
+        <div class="dimension-input">
+          <label>Width (A) (in): <input type="number" id="widthA" value="14" min="4" max="42" step="0.001" oninput="drawBox()" onblur="validateInput(this)"></label>
+        </div>
+        <div class="dimension-input">
+          <label>Width (B) (in): <input type="number" id="widthB" value="8" min="4" max="42" step="0.001" oninput="drawBox()" onblur="validateInput(this)"></label>
+        </div>
+        <div class="dimension-input">
+          <label>Height (in): <input type="number" id="height" value="20" min="4" max="46" step="0.001" oninput="drawBox()" onblur="validateInput(this)"></label>
+        </div>
+      </div>
+      
+      <div class="option-group">
+        <div class="option-group-title">Lip/Flange & End Cap Options</div>
+        <div class="sub-section">
+          <div class="sub-section-title">Lip/Flange (Inches)</div>
+          <div style="text-align: center;">
+            <label class="radio-option"><input type="radio" name="lipSize" value="0.25" checked onclick="drawBox()"> 1/4"</label>
+            <label class="radio-option"><input type="radio" name="lipSize" value="0.375" onclick="drawBox()"> 3/8"</label>
+            <label class="radio-option"><input type="radio" name="lipSize" value="0.5" onclick="drawBox()"> 1/2"</label>
+            <label class="radio-option"><input type="radio" name="lipSize" value="0.75" onclick="drawBox()"> 3/4"</label>
+            <label class="radio-option"><input type="radio" name="lipSize" value="1" onclick="drawBox()"> 1"</label>
+            <label class="radio-option"><input type="radio" name="lipSize" value="1.25" onclick="drawBox()"> 1-1/4"</label>
+            <label class="radio-option"><input type="radio" name="lipSize" value="0" onclick="drawBox()"> No Lip/Flange</label>
+          </div>
+        </div>
+        <div class="sub-section">
+          <div class="sub-section-title">End Cap Needed</div>
+          <div class="end-cap-options">
+            <label class="radio-option"><input type="radio" name="endCap" value="yes" onclick="drawBox(); calculateTotalCost();"> Yes (+$12.50)</label>
+            <label class="radio-option"><input type="radio" name="endCap" value="no" checked onclick="drawBox(); calculateTotalCost();"> No</label>
+          </div>
+        </div>
+      </div>
+      
+      <div class="option-group">
+        <div class="option-group-title">Shipping & Reset Options</div>
+        <div class="sub-section">
+          <div class="sub-section-title">Select the first digit of your zip code to calculate shipping costs</div>
+          <div class="zip-options">
+            <label class="radio-option"><input type="radio" name="zipDigit" value="0" checked onclick="calculateTotalCost()"> #0</label>
+            <label class="radio-option"><input type="radio" name="zipDigit" value="1" onclick="calculateTotalCost()"> #1</label>
+            <label class="radio-option"><input type="radio" name="zipDigit" value="2" onclick="calculateTotalCost()"> #2</label>
+            <label class="radio-option"><input type="radio" name="zipDigit" value="3" onclick="calculateTotalCost()"> #3</label>
+            <label class="radio-option"><input type="radio" name="zipDigit" value="4" onclick="calculateTotalCost()"> #4</label>
+            <label class="radio-option"><input type="radio" name="zipDigit" value="5" onclick="calculateTotalCost()"> #5</label>
+            <label class="radio-option"><input type="radio" name="zipDigit" value="6" onclick="calculateTotalCost()"> #6</label>
+            <label class="radio-option"><input type="radio" name="zipDigit" value="7" onclick="calculateTotalCost()"> #7</label>
+            <label class="radio-option"><input type="radio" name="zipDigit" value="8" onclick="calculateTotalCost()"> #8</label>
+            <label class="radio-option"><input type="radio" name="zipDigit" value="9" onclick="calculateTotalCost()"> #9</label>
+          </div>
+        </div>
+        <div class="sub-section">
+          <div class="sub-section-title">Reset</div>
+          <div style="text-align: center;">
+            <button onclick="resetView()">Reset View & Dimensions</button>
+          </div>
+        </div>
+      </div>
+    </div>
+    
+    <div class="cost-display">
+      <span>TOTAL COST: $123.89</span>
+      <button class="add-to-cart-btn" onclick="addToCart()">ADD TO CART</button>
+    </div>
+  </div>
+  
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+  <script src="js/orbit-controls.js"></script>
+  <script src="js/main.js"></script>
+</body>
+</html>

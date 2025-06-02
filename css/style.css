@@ -1,0 +1,239 @@
+body { 
+  margin: 0; 
+  font-family: 'Roboto', sans-serif; 
+  overflow-x: hidden;
+  display: flex;
+  flex-direction: column;
+  background-color: #f8f9fa;
+}
+
+#canvas-container {
+  width: 100%;
+  height: 70vh;
+  background: linear-gradient(135deg, #2c3e50, #4a627a);
+  box-shadow: 0 4px 10px rgba(0,0,0,0.2);
+}
+
+#ui { 
+  padding: 30px;
+  background: #ffffff;
+  border-top: 2px solid #e0e0e0;
+  width: 100%;
+  box-sizing: border-box;
+  position: relative;
+}
+
+.controls-container {
+  max-width: 1200px;
+  margin: 0 auto;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: 25px;
+  margin-bottom: 120px;
+}
+
+.input-group {
+  margin-bottom: 15px;
+}
+
+.dimension-input {
+  margin-bottom: 15px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  text-align: center;
+}
+
+.dimension-input label {
+  font-size: 16px;
+  color: #2c3e50;
+}
+
+.dimension-input input {
+  width: 90px;
+  margin-left: 8px;
+  padding: 8px;
+  border: 1px solid #dfe6e9;
+  border-radius: 5px;
+  transition: border-color 0.3s ease;
+}
+
+.dimension-input input:focus {
+  border-color: #1F7941;
+  outline: none;
+  box-shadow: 0 0 5px rgba(31, 121, 65, 0.3);
+}
+
+.option-group {
+  margin-bottom: 25px;
+  padding: 15px;
+  background: #ffffff;
+  border-radius: 8px;
+  box-shadow: 0 3px 15px rgba(0,0,0,0.1);
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.option-group:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 6px 20px rgba(0,0,0,0.15);
+}
+
+.option-group-title {
+  font-weight: 600;
+  font-size: 18px;
+  margin-bottom: 12px;
+  color: #2c3e50;
+  text-align: center;
+  letter-spacing: 0.5px;
+}
+
+.sub-section {
+  margin-bottom: 20px; /* Increased spacing for clarity between subsections */
+}
+
+.sub-section:last-child {
+  margin-bottom: 0; /* Remove margin from the last subsection */
+}
+
+.sub-section-title {
+  font-weight: 500;
+  font-size: 16px;
+  margin-bottom: 8px;
+  color: #34495e;
+  text-align: center;
+}
+
+.radio-option {
+  display: inline-block;
+  margin-right: 8px;
+  margin-bottom: 6px;
+  font-size: 15px;
+  color: #34495e;
+}
+
+.radio-option input {
+  margin-right: 4px;
+}
+
+.end-cap-options {
+  display: flex;
+  justify-content: center;
+  margin-bottom: 12px;
+}
+
+.zip-options {
+  display: grid;
+  grid-template-columns: repeat(10, 1fr);
+  gap: 6px;
+  justify-content: center;
+}
+
+button {
+  padding: 10px 20px;
+  background: #1F7941;
+  color: white;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+  margin-top: 8px;
+  font-size: 15px;
+  font-weight: 500;
+  transition: background 0.3s ease, transform 0.1s ease;
+}
+
+button:hover {
+  background: #156032;
+  transform: scale(1.05);
+}
+
+button:active {
+  transform: scale(0.98);
+}
+
+.cost-display {
+  font-size: 22px;
+  font-weight: 600;
+  color: white;
+  text-align: center;
+  padding: 20px;
+  background: #1F7941;
+  border-radius: 8px;
+  box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+  position: absolute;
+  bottom: 25px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 100;
+  width: 340px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  text-transform: uppercase;
+  transition: transform 0.2s ease;
+}
+
+.cost-display:hover {
+  transform: translateX(-50%) scale(1.02);
+}
+
+.cost-display span {
+  margin-bottom: 10px;
+}
+
+.add-to-cart-btn {
+  background: #1F7941;
+  color: white;
+  padding: 12px 25px;
+  border: none;
+  border-radius: 5px;
+  font-size: 16px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.3s ease, transform 0.1s ease;
+  text-transform: uppercase;
+  margin: 0 auto;
+}
+
+.add-to-cart-btn:hover {
+  background: #156032;
+  transform: scale(1.05);
+}
+
+.add-to-cart-btn:active {
+  transform: scale(0.98);
+}
+
+@media screen and (max-width: 768px) {
+  #canvas-container {
+    height: 50vh;
+  }
+  .controls-container {
+    grid-template-columns: 1fr;
+    gap: 20px;
+  }
+  .cost-display {
+    width: calc(100% - 60px);
+    flex-direction: column;
+    padding: 15px;
+  }
+  .cost-display span {
+    text-align: center;
+    margin-bottom: 10px;
+  }
+  .add-to-cart-btn {
+    margin: 0 auto;
+  }
+  .option-group {
+    padding: 12px;
+  }
+  .zip-options {
+    grid-template-columns: repeat(10, 1fr);
+    gap: 4px;
+  }
+  .radio-option {
+    margin-right: 6px;
+    margin-bottom: 4px;
+    font-size: 14px;
+  }
+}
