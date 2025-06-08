@@ -1,13 +1,14 @@
-require("dotenv").config(); // Load .env variables
+require("dotenv").config(); // Load environment variables
 
 const express = require("express");
 const path = require("path");
 const fetch = require("node-fetch");
 
 const app = express();
-const PORT = process.env.PORT || 10000; // Let Render override port
+const PORT = process.env.PORT || 3000;
 
-app.use(express.static(path.join(__dirname)));
+// Serve static frontend files from /public (optional)
+app.use(express.static(path.join(__dirname, "public")));
 app.use(express.json());
 
 // Shopify Variant Creation Endpoint
@@ -30,22 +31,13 @@ app.post("/create-variant", async (req, res) => {
       })
     });
 
-    const contentType = response.headers.get("content-type");
+    const data = await response.json();
 
     if (response.ok) {
-      const data = await response.json();
       res.json({ variantId: data.variant.id });
     } else {
-      const errorDetails = contentType && contentType.includes("application/json")
-        ? await response.json()
-        : await response.text();
-
-      console.error("Variant creation failed:", errorDetails);
-
-      res.status(500).json({
-        error: "Failed to create variant",
-        details: errorDetails
-      });
+      console.error("Variant creation failed:", data);
+      res.status(500).json({ error: "Failed to create variant", details: data });
     }
   } catch (err) {
     console.error("Server error:", err);
@@ -53,7 +45,7 @@ app.post("/create-variant", async (req, res) => {
   }
 });
 
-// Root route
+// Root route for index.html
 app.get("/", (req, res) => {
   res.sendFile(path.join(__dirname, "index.html"));
 });
