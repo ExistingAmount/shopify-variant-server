@@ -2,14 +2,19 @@ require("dotenv").config(); // Load .env variables
 
 const express = require("express");
 const path = require("path");
-const fetch = require("node-fetch"); // Ensure this is installed
+const fetch = require("node-fetch");
 
 const app = express();
 const PORT = process.env.PORT || 3000;
 
-// Serve frontend files (index.html, js/, css/, etc.)
-app.use(express.static(path.join(__dirname)));
-app.use(express.json());
+// Middleware
+app.use(express.static(path.join(__dirname))); // Serve index.html and static assets
+app.use(express.json()); // Parse JSON bodies
+
+// Test route to confirm server is working
+app.get("/test", (req, res) => {
+  res.send("✅ Variant server is live!");
+});
 
 // Shopify Variant Creation Endpoint
 app.post("/create-variant", async (req, res) => {
@@ -20,15 +25,15 @@ app.post("/create-variant", async (req, res) => {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
-        "X-Shopify-Access-Token": process.env.SHOPIFY_ACCESS_TOKEN
+        "X-Shopify-Access-Token": process.env.SHOPIFY_ACCESS_TOKEN,
       },
       body: JSON.stringify({
         variant: {
           option1: optionValue,
           price: price.toFixed(2),
-          sku: `CUST-${Date.now()}`
-        }
-      })
+          sku: `CUST-${Date.now()}`,
+        },
+      }),
     });
 
     const data = await response.json();
@@ -36,21 +41,21 @@ app.post("/create-variant", async (req, res) => {
     if (response.ok) {
       res.json({ variantId: data.variant.id });
     } else {
-      console.error("Variant creation failed:", data);
-      res.status(500).json({ error: "Failed to create variant" });
+      console.error("❌ Shopify API error:", data);
+      res.status(500).json({ error: "Failed to create variant", details: data });
     }
   } catch (err) {
-    console.error("Server error:", err);
-    res.status(500).json({ error: "Server error" });
+    console.error("❌ Server error:", err);
+    res.status(500).json({ error: "Internal server error" });
   }
 });
 
-// Root route
+// Fallback root route (optional)
 app.get("/", (req, res) => {
   res.sendFile(path.join(__dirname, "index.html"));
 });
 
 // Start server
 app.listen(PORT, () => {
-  console.log(`Server running on port ${PORT}`);
+  console.log(`✅ Server running on port ${PORT}`);
 });
