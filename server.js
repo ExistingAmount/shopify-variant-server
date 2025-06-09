@@ -1,23 +1,26 @@
 const express = require('express');
 const fetch = require('node-fetch');
-require('dotenv').config();
+const dotenv = require('dotenv');
+const cors = require('cors');
+
+dotenv.config();
 
 const app = express();
+const PORT = process.env.PORT || 3000;
+
+const SHOPIFY_DOMAIN = process.env.SHOPIFY_DOMAIN;
+const SHOPIFY_ACCESS_TOKEN = process.env.SHOPIFY_ACCESS_TOKEN;
+const PRODUCT_ID = process.env.PRODUCT_ID;
+
+app.use(cors());
 app.use(express.json());
 
-// Debug log: print env values at startup (safe to use during setup)
-console.log('🛠️ Loaded ENV:', {
-  PRODUCT_ID: process.env.PRODUCT_ID,
-  SHOPIFY_DOMAIN: process.env.SHOPIFY_DOMAIN,
-  SHOPIFY_ACCESS_TOKEN: process.env.SHOPIFY_ACCESS_TOKEN ? '✅ LOADED' : '❌ MISSING'
-});
-
-// Root route for basic status
+// Health check
 app.get('/', (req, res) => {
   res.send('✅ Variant API is live');
 });
 
-// Variant creation route
+// Create variant route
 app.post('/create-variant', async (req, res) => {
   const { optionValue, price } = req.body;
 
@@ -25,37 +28,56 @@ app.post('/create-variant', async (req, res) => {
     return res.status(400).json({ error: 'Missing optionValue or price' });
   }
 
+  const productGID = `gid://shopify/Product/${PRODUCT_ID}`;
+  const graphqlQuery = {
+    query: `
+      mutation {
+        productVariantCreate(input: {
+          productId: "${productGID}",
+          price: "${price}",
+          options: ["${optionValue}"]
+        }) {
+          productVariant {
+            id
+            title
+          }
+          userErrors {
+            field
+            message
+          }
+        }
+      }
+    `,
+  };
+
   try {
-    const response = await fetch(`https://${process.env.SHOPIFY_DOMAIN}/admin/api/2023-04/products/${process.env.PRODUCT_ID}/variants.json`, {
+    const response = await fetch(`https://${SHOPIFY_DOMAIN}/admin/api/2024-04/graphql.json`, {
       method: 'POST',
       headers: {
+        'X-Shopify-Access-Token': SHOPIFY_ACCESS_TOKEN,
         'Content-Type': 'application/json',
-        'X-Shopify-Access-Token': process.env.SHOPIFY_ACCESS_TOKEN,
       },
-      body: JSON.stringify({
-        variant: {
-          option1: optionValue,
-          price: price
-        }
-      }),
+      body: JSON.stringify(graphqlQuery),
     });
 
     const data = await response.json();
 
-    if (!response.ok) {
-      console.error('❌ Shopify error:', data);
-      return res.status(response.status).json({ error: 'Failed to create variant', details: data.errors || data });
+    if (data.errors) {
+      return res.status(500).json({ error: 'Failed to create variant', details: data.errors });
     }
 
-    res.status(200).json({ success: true, variant: data.variant });
+    const errors = data.data.productVariantCreate.userErrors;
+    if (errors.length > 0) {
+      return res.status(400).json({ error: 'Variant creation error', details: errors });
+    }
+
+    return res.json({ success: true, variant: data.data.productVariantCreate.productVariant });
   } catch (err) {
-    console.error('❌ Server error:', err);
+    console.error('Server error:', err);
     res.status(500).json({ error: 'Server error', details: err.message });
   }
 });
 
-// Start server
-const PORT = process.env.PORT || 10000;
 app.listen(PORT, () => {
   console.log(`🚀 Server running on port ${PORT}`);
 });
