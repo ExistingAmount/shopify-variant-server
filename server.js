@@ -4,10 +4,7 @@ import dotenv from 'dotenv';
 import fetch from 'node-fetch';
 
 dotenv.config();
-
 const app = express();
-const PORT = process.env.PORT || 3000;
-
 app.use(cors());
 app.use(express.json());
 
@@ -17,46 +14,35 @@ app.get('/', (req, res) => {
 
 app.post('/create-variant', async (req, res) => {
   const { optionValue, price } = req.body;
-
   if (!optionValue || !price) {
     return res.status(400).json({ error: 'Missing optionValue or price' });
   }
 
-  const shop = process.env.SHOPIFY_DOMAIN;
-  const accessToken = process.env.SHOPIFY_ACCESS_TOKEN;
-  const productId = process.env.PRODUCT_ID;
-
-  const url = `https://${shop}/admin/api/2024-04/products/${productId}/variants.json`;
-
-  const variantData = {
-    variant: {
-      option1: optionValue,
-      price: price.toString(),
-    },
-  };
-
   try {
-    const response = await fetch(url, {
+    const response = await fetch(`https://${process.env.SHOPIFY_STORE_DOMAIN}/admin/api/2024-04/products/${process.env.PRODUCT_ID}/variants.json`, {
       method: 'POST',
       headers: {
-        'X-Shopify-Access-Token': accessToken,
-        'Content-Type': 'application/json',
+        'X-Shopify-Access-Token': process.env.SHOPIFY_ADMIN_TOKEN,
+        'Content-Type': 'application/json'
       },
-      body: JSON.stringify(variantData),
+      body: JSON.stringify({
+        variant: {
+          option1: optionValue,
+          price: price
+        }
+      })
     });
 
-    const result = await response.json();
-
+    const data = await response.json();
     if (!response.ok) {
-      return res.status(500).json({ error: 'Failed to create variant', details: result.errors || result });
+      return res.status(500).json({ error: 'Failed to create variant', details: data.errors || data });
     }
 
-    res.json({ message: 'Variant created', variant: result.variant });
+    res.status(200).json({ message: 'Variant created successfully', data });
   } catch (error) {
     res.status(500).json({ error: 'Server error', details: error.message });
   }
 });
 
-app.listen(PORT, () => {
-  console.log(`Server running on port ${PORT}`);
-});
+const PORT = process.env.PORT || 3000;
+app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
