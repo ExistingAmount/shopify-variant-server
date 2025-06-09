@@ -18,17 +18,25 @@ app.post('/create-variant', async (req, res) => {
     return res.status(400).json({ error: 'Missing optionValue or price' });
   }
 
+  // Validate price format
+  const parsedPrice = parseFloat(price).toFixed(2);
+  if (isNaN(parsedPrice)) {
+    return res.status(400).json({ error: 'Invalid price format' });
+  }
+
   try {
-    const response = await fetch(`https://${process.env.SHOPIFY_STORE_DOMAIN}/admin/api/2024-04/products/${process.env.PRODUCT_ID}/variants.json`, {
+    const response = await fetch(`https://${process.env.SHOPIFY_DOMAIN}/admin/api/2024-04/products/${process.env.PRODUCT_ID}/variants.json`, {
       method: 'POST',
       headers: {
-        'X-Shopify-Access-Token': process.env.SHOPIFY_ADMIN_TOKEN,
+        'X-Shopify-Access-Token': process.env.SHOPIFY_ACCESS_TOKEN,
         'Content-Type': 'application/json'
       },
       body: JSON.stringify({
         variant: {
           option1: optionValue,
-          price: price
+          price: parsedPrice,
+          inventory_management: 'shopify',
+          inventory_quantity: 100
         }
       })
     });
