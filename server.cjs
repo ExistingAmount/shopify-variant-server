@@ -1,6 +1,6 @@
 const express = require('express');
 const bodyParser = require('body-parser');
-const fetch = require('node-fetch');
+const fetch = require('node-fetch'); // Or use `node-fetch@2` if on Node 18+
 require('dotenv').config();
 
 const app = express();
@@ -8,12 +8,10 @@ const PORT = process.env.PORT || 10000;
 
 app.use(bodyParser.json());
 
-// Root test route
 app.get('/', (req, res) => {
   res.send('Variant API is live');
 });
 
-// Create variant route
 app.post('/create-variant', async (req, res) => {
   const { productId, optionValues, price } = req.body;
 
