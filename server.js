@@ -1,69 +1,64 @@
-import express from 'express';
-import cors from 'cors';
-import dotenv from 'dotenv';
-import fetch from 'node-fetch';
+const express = require('express');
+const bodyParser = require('body-parser');
+const fetch = require('node-fetch'); // Or use `node-fetch@2` if on Node 18+
+require('dotenv').config();
 
-dotenv.config();
 const app = express();
-app.use(cors());
-app.use(express.json());
+const PORT = process.env.PORT || 10000;
+
+app.use(bodyParser.json());
 
 app.get('/', (req, res) => {
   res.send('Variant API is live');
 });
 
 app.post('/create-variant', async (req, res) => {
-  const { optionValue, price } = req.body;
-  console.log('Incoming request body:', req.body);
+  const { productId, optionValues, price } = req.body;
 
-  if (!optionValue || !price) {
-    console.error('Missing required fields');
-    return res.status(400).json({ error: 'Missing optionValue or price' });
+  if (!productId || !optionValues || !price) {
+    return res.status(400).json({ error: 'Missing required fields' });
   }
 
-  const parsedPrice = parseFloat(price).toFixed(2);
-  if (isNaN(parsedPrice)) {
-    console.error('Invalid price format:', price);
-    return res.status(400).json({ error: 'Invalid price format' });
-  }
+  const storeDomain = process.env.SHOPIFY_STORE_DOMAIN;
+  const token = process.env.SHOPIFY_ADMIN_API_TOKEN;
 
-  const url = `https://${process.env.SHOPIFY_DOMAIN}/admin/api/2024-04/products/${process.env.PRODUCT_ID}/variants.json`;
-  console.log('Shopify API URL:', url);
+  const url = `https://${storeDomain}/admin/api/2024-01/products/${productId}/variants.json`;
+
+  const variantData = {
+    variant: {
+      option1: optionValues[0] || null,
+      option2: optionValues[1] || null,
+      option3: optionValues[2] || null,
+      price: price.toString(),
+      inventory_management: "shopify"
+    }
+  };
 
   try {
     const response = await fetch(url, {
       method: 'POST',
       headers: {
-        'X-Shopify-Access-Token': process.env.SHOPIFY_ACCESS_TOKEN,
-        'Content-Type': 'application/json',
+        'X-Shopify-Access-Token': token,
+        'Content-Type': 'application/json'
       },
-      body: JSON.stringify({
-        variant: {
-          option1: optionValue,
-          price: parsedPrice,
-          inventory_management: 'shopify',
-          inventory_quantity: 100,
-        },
-      }),
+      body: JSON.stringify(variantData)
     });
 
     const data = await response.json();
-    console.log('Shopify API response:', data);
 
     if (!response.ok) {
-      console.error('Shopify API error response:', data);
-      return res.status(500).json({
-        error: 'Failed to create variant',
-        details: data.errors || data,
-      });
+      console.error('Shopify error:', data);
+      return res.status(500).json({ error: 'Failed to create variant', details: data });
     }
 
-    res.status(200).json({ message: 'Variant created successfully', data });
+    console.log('Variant created:', data.variant.id);
+    res.status(200).json({ message: 'Variant created successfully', variant: data.variant });
   } catch (error) {
-    console.error('Fetch error:', error.message);
+    console.error('Server error:', error);
     res.status(500).json({ error: 'Server error', details: error.message });
   }
 });
 
-const PORT = process.env.PORT || 3000;
-app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
+app.listen(PORT, () => {
+  console.log(`Server running on port ${PORT}`);
+});
