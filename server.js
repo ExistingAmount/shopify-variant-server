@@ -13,14 +13,49 @@ app.get('/', (req, res) => {
 });
 
 app.post('/create-variant', async (req, res) => {
-  const { productId, optionValues, price } = req.body;
+  console.log('Received request body:', req.body);
+  
+  let { productId, optionValues, optionValue, price } = req.body;
 
-  if (!productId || !optionValues || !price) {
-    return res.status(400).json({ error: 'Missing required fields' });
+  // Handle both optionValues array and single optionValue
+  if (!optionValues && optionValue) {
+    optionValues = [optionValue];
   }
 
-  const storeDomain = process.env.SHOPIFY_STORE_DOMAIN;
-  const token = process.env.SHOPIFY_ADMIN_API_TOKEN;
+  // Validate required fields
+  if (!productId) {
+    return res.status(400).json({ 
+      error: 'Missing productId', 
+      received: req.body,
+      expected: 'productId, optionValues (array), price'
+    });
+  }
+  
+  if (!optionValues || !Array.isArray(optionValues)) {
+    return res.status(400).json({ 
+      error: 'Missing or invalid optionValues (should be an array)', 
+      received: req.body,
+      expected: 'productId, optionValues (array), price'
+    });
+  }
+  
+  if (!price) {
+    return res.status(400).json({ 
+      error: 'Missing price', 
+      received: req.body,
+      expected: 'productId, optionValues (array), price'
+    });
+  }
+
+  const storeDomain = process.env.SHOPIFY_DOMAIN;
+  const token = process.env.SHOPIFY_ACCESS_TOKEN;
+
+  if (!storeDomain || !token) {
+    return res.status(500).json({ 
+      error: 'Missing Shopify configuration',
+      details: 'SHOPIFY_DOMAIN and SHOPIFY_ACCESS_TOKEN must be set in environment variables'
+    });
+  }
 
   const url = `https://${storeDomain}/admin/api/2024-01/products/${productId}/variants.json`;
 
@@ -30,9 +65,12 @@ app.post('/create-variant', async (req, res) => {
       option2: optionValues[1] || null,
       option3: optionValues[2] || null,
       price: price.toString(),
-      inventory_management: "shopify"
+      inventory_management: "shopify",
+      inventory_quantity: 1000 // Set initial inventory
     }
   };
+
+  console.log('Creating variant with data:', JSON.stringify(variantData, null, 2));
 
   try {
     const response = await fetch(url, {
@@ -48,17 +86,30 @@ app.post('/create-variant', async (req, res) => {
 
     if (!response.ok) {
       console.error('Shopify error:', data);
-      return res.status(500).json({ error: 'Failed to create variant', details: data });
+      return res.status(response.status).json({ 
+        error: 'Failed to create variant', 
+        details: data,
+        shopifyStatus: response.status
+      });
     }
 
-    console.log('Variant created:', data.variant.id);
-    res.status(200).json({ message: 'Variant created successfully', variant: data.variant });
+    console.log('Variant created successfully:', data.variant.id);
+    res.status(200).json({ 
+      message: 'Variant created successfully', 
+      variant: data.variant 
+    });
   } catch (error) {
     console.error('Server error:', error);
-    res.status(500).json({ error: 'Server error', details: error.message });
+    res.status(500).json({ 
+      error: 'Server error', 
+      details: error.message 
+    });
   }
 });
 
 app.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);
+  console.log('Make sure these environment variables are set:');
+  console.log('- SHOPIFY_DOMAIN');
+  console.log('- SHOPIFY_ACCESS_TOKEN');
 });
