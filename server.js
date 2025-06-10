@@ -48,7 +48,7 @@ app.get('/get-product/:productId', async (req, res) => {
     });
   }
 
-  const url = `https://${storeDomain}/admin/api/2025-04/products/${productId}.json`;
+  const url = `https://${storeDomain}/admin/api/2024-10/products/${productId}.json`;
 
   try {
     console.log('Fetching from URL:', url);
@@ -116,7 +116,7 @@ app.get('/list-products', async (req, res) => {
     });
   }
 
-  const url = `https://${storeDomain}/admin/api/2025-04/products.json?limit=50`;
+  const url = `https://${storeDomain}/admin/api/2024-10/products.json?limit=50`;
 
   try {
     console.log('Fetching from URL:', url);
@@ -206,7 +206,7 @@ app.post('/create-variant', async (req, res) => {
     });
   }
 
-  const url = `https://${storeDomain}/admin/api/2025-04/products/${productId}/variants.json`;
+  const url = `https://${storeDomain}/admin/api/2024-10/products/${productId}/variants.json`;
 
   const variantData = {
     variant: {
