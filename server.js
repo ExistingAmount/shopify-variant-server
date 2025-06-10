@@ -12,15 +12,47 @@ app.get('/', (req, res) => {
   res.send('Variant API is live');
 });
 
+// Debug endpoint to test Shopify connection
+app.get('/test-shopify', async (req, res) => {
+  const storeDomain = process.env.SHOPIFY_DOMAIN;
+  const token = process.env.SHOPIFY_ACCESS_TOKEN;
+  
+  console.log('Testing Shopify connection...');
+  console.log('Domain:', storeDomain);
+  console.log('Token exists:', !!token);
+  
+  res.json({
+    domain: storeDomain,
+    tokenExists: !!token,
+    tokenLength: token ? token.length : 0,
+    envVars: Object.keys(process.env).filter(key => key.includes('SHOPIFY'))
+  });
+});
+
 // Get product details
 app.get('/get-product/:productId', async (req, res) => {
   const { productId } = req.params;
   const storeDomain = process.env.SHOPIFY_DOMAIN;
   const token = process.env.SHOPIFY_ACCESS_TOKEN;
 
+  console.log('Get product request:', {
+    productId,
+    domain: storeDomain,
+    tokenExists: !!token
+  });
+
+  if (!storeDomain || !token) {
+    return res.status(500).json({ 
+      error: 'Missing Shopify configuration',
+      details: 'SHOPIFY_DOMAIN and SHOPIFY_ACCESS_TOKEN must be set in environment variables'
+    });
+  }
+
   const url = `https://${storeDomain}/admin/api/2024-01/products/${productId}.json`;
 
   try {
+    console.log('Fetching from URL:', url);
+    
     const response = await fetch(url, {
       headers: {
         'X-Shopify-Access-Token': token,
@@ -28,12 +60,17 @@ app.get('/get-product/:productId', async (req, res) => {
       }
     });
 
+    console.log('Response status:', response.status);
+    
     const data = await response.json();
     
     if (!response.ok) {
+      console.log('Shopify API error:', data);
       return res.status(response.status).json({ 
         error: 'Failed to get product', 
-        details: data 
+        details: data,
+        url: url,
+        status: response.status
       });
     }
 
@@ -53,7 +90,12 @@ app.get('/get-product/:productId', async (req, res) => {
       }
     });
   } catch (error) {
-    res.status(500).json({ error: 'Server error', details: error.message });
+    console.error('Server error:', error);
+    res.status(500).json({ 
+      error: 'Server error', 
+      details: error.message,
+      url: url
+    });
   }
 });
 
@@ -62,9 +104,23 @@ app.get('/list-products', async (req, res) => {
   const storeDomain = process.env.SHOPIFY_DOMAIN;
   const token = process.env.SHOPIFY_ACCESS_TOKEN;
 
+  console.log('List products request:', {
+    domain: storeDomain,
+    tokenExists: !!token
+  });
+
+  if (!storeDomain || !token) {
+    return res.status(500).json({ 
+      error: 'Missing Shopify configuration',
+      details: 'SHOPIFY_DOMAIN and SHOPIFY_ACCESS_TOKEN must be set in environment variables'
+    });
+  }
+
   const url = `https://${storeDomain}/admin/api/2024-01/products.json?limit=50`;
 
   try {
+    console.log('Fetching from URL:', url);
+    
     const response = await fetch(url, {
       headers: {
         'X-Shopify-Access-Token': token,
@@ -72,12 +128,17 @@ app.get('/list-products', async (req, res) => {
       }
     });
 
+    console.log('Response status:', response.status);
+    
     const data = await response.json();
     
     if (!response.ok) {
+      console.log('Shopify API error:', data);
       return res.status(response.status).json({ 
         error: 'Failed to list products', 
-        details: data 
+        details: data,
+        url: url,
+        status: response.status
       });
     }
 
@@ -91,7 +152,12 @@ app.get('/list-products', async (req, res) => {
       }))
     });
   } catch (error) {
-    res.status(500).json({ error: 'Server error', details: error.message });
+    console.error('Server error:', error);
+    res.status(500).json({ 
+      error: 'Server error', 
+      details: error.message,
+      url: url
+    });
   }
 });
 
