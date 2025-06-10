@@ -24,6 +24,38 @@ app.get('/test-shopify', async (req, res) => {
   });
 });
 
+app.get('/ping-shopify', async (req, res) => {
+  const storeDomain = process.env.SHOPIFY_DOMAIN;
+  const token = process.env.SHOPIFY_ACCESS_TOKEN;
+
+  const url = `https://${storeDomain}/admin/api/2024-01/shop.json`;
+
+  try {
+    const response = await fetch(url, {
+      headers: {
+        'X-Shopify-Access-Token': token,
+        'Content-Type': 'application/json'
+      }
+    });
+
+    const data = await response.json();
+
+    if (!response.ok) {
+      return res.status(response.status).json({
+        error: 'Failed to ping shop',
+        details: data
+      });
+    }
+
+    res.json({
+      message: 'Ping successful',
+      shop: data.shop
+    });
+  } catch (err) {
+    res.status(500).json({ error: 'Server error', details: err.message });
+  }
+});
+
 app.get('/get-product/:productId', async (req, res) => {
   const { productId } = req.params;
   const storeDomain = process.env.SHOPIFY_DOMAIN;
