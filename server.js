@@ -12,201 +12,89 @@ app.get('/', (req, res) => {
   res.send('Variant API is live');
 });
 
-// Debug endpoint to test Shopify connection
 app.get('/test-shopify', async (req, res) => {
   const storeDomain = process.env.SHOPIFY_DOMAIN;
   const token = process.env.SHOPIFY_ACCESS_TOKEN;
-  
-  console.log('Testing Shopify connection...');
-  console.log('Domain:', storeDomain);
-  console.log('Token exists:', !!token);
-  
+
   res.json({
     domain: storeDomain,
     tokenExists: !!token,
     tokenLength: token ? token.length : 0,
-    envVars: Object.keys(process.env).filter(key => key.includes('SHOPIFY'))
+    envVars: Object.keys(process.env).filter(k => k.includes('SHOPIFY'))
   });
 });
 
-// Get product details
 app.get('/get-product/:productId', async (req, res) => {
   const { productId } = req.params;
   const storeDomain = process.env.SHOPIFY_DOMAIN;
   const token = process.env.SHOPIFY_ACCESS_TOKEN;
 
-  console.log('Get product request:', {
-    productId,
-    domain: storeDomain,
-    tokenExists: !!token
-  });
-
-  if (!storeDomain || !token) {
-    return res.status(500).json({ 
-      error: 'Missing Shopify configuration',
-      details: 'SHOPIFY_DOMAIN and SHOPIFY_ACCESS_TOKEN must be set in environment variables'
-    });
-  }
-
-  const url = `https://${storeDomain}/admin/api/2024-04/products/${productId}.json`;
+  const url = `https://${storeDomain}/admin/api/2024-01/products/${productId}.json`;
 
   try {
-    console.log('Fetching from URL:', url);
-    
     const response = await fetch(url, {
       headers: {
         'X-Shopify-Access-Token': token,
         'Content-Type': 'application/json'
       }
     });
-
-    console.log('Response status:', response.status);
-    
     const data = await response.json();
-    
+
     if (!response.ok) {
-      console.log('Shopify API error:', data);
-      return res.status(response.status).json({ 
-        error: 'Failed to get product', 
+      return res.status(response.status).json({
+        error: 'Failed to get product',
         details: data,
-        url: url,
-        status: response.status
+        url: url
       });
     }
 
-    res.json({
-      product: {
-        id: data.product.id,
-        title: data.product.title,
-        options: data.product.options,
-        variants: data.product.variants.map(v => ({
-          id: v.id,
-          title: v.title,
-          option1: v.option1,
-          option2: v.option2,
-          option3: v.option3,
-          price: v.price
-        }))
-      }
-    });
-  } catch (error) {
-    console.error('Server error:', error);
-    res.status(500).json({ 
-      error: 'Server error', 
-      details: error.message,
-      url: url
-    });
+    res.json(data);
+  } catch (err) {
+    res.status(500).json({ error: 'Server error', details: err.message });
   }
 });
 
-// List all products (first 50)
 app.get('/list-products', async (req, res) => {
   const storeDomain = process.env.SHOPIFY_DOMAIN;
   const token = process.env.SHOPIFY_ACCESS_TOKEN;
-
-  console.log('List products request:', {
-    domain: storeDomain,
-    tokenExists: !!token
-  });
-
-  if (!storeDomain || !token) {
-    return res.status(500).json({ 
-      error: 'Missing Shopify configuration',
-      details: 'SHOPIFY_DOMAIN and SHOPIFY_ACCESS_TOKEN must be set in environment variables'
-    });
-  }
-
-  const url = `https://${storeDomain}/admin/api/2024-04/products.json?limit=50`;
+  const url = `https://${storeDomain}/admin/api/2024-01/products.json?limit=50`;
 
   try {
-    console.log('Fetching from URL:', url);
-    
     const response = await fetch(url, {
       headers: {
         'X-Shopify-Access-Token': token,
         'Content-Type': 'application/json'
       }
     });
-
-    console.log('Response status:', response.status);
-    
     const data = await response.json();
-    
+
     if (!response.ok) {
-      console.log('Shopify API error:', data);
-      return res.status(response.status).json({ 
-        error: 'Failed to list products', 
+      return res.status(response.status).json({
+        error: 'Failed to list products',
         details: data,
-        url: url,
-        status: response.status
+        url: url
       });
     }
 
-    res.json({
-      products: data.products.map(p => ({
-        id: p.id,
-        title: p.title,
-        handle: p.handle,
-        options: p.options,
-        variant_count: p.variants.length
-      }))
-    });
-  } catch (error) {
-    console.error('Server error:', error);
-    res.status(500).json({ 
-      error: 'Server error', 
-      details: error.message,
-      url: url
-    });
+    res.json(data.products);
+  } catch (err) {
+    res.status(500).json({ error: 'Server error', details: err.message });
   }
 });
 
 app.post('/create-variant', async (req, res) => {
-  console.log('Received request body:', req.body);
-  
-  let { productId, optionValues, optionValue, price } = req.body;
+  const { productId, optionValues, price } = req.body;
 
-  // Handle both optionValues array and single optionValue
-  if (!optionValues && optionValue) {
-    optionValues = [optionValue];
-  }
-
-  // Validate required fields
-  if (!productId) {
-    return res.status(400).json({ 
-      error: 'Missing productId', 
-      received: req.body,
-      expected: 'productId, optionValues (array), price'
-    });
-  }
-  
-  if (!optionValues || !Array.isArray(optionValues)) {
-    return res.status(400).json({ 
-      error: 'Missing or invalid optionValues (should be an array)', 
-      received: req.body,
-      expected: 'productId, optionValues (array), price'
-    });
-  }
-  
-  if (!price) {
-    return res.status(400).json({ 
-      error: 'Missing price', 
-      received: req.body,
-      expected: 'productId, optionValues (array), price'
+  if (!productId || !optionValues || !price) {
+    return res.status(400).json({
+      error: 'Missing productId, optionValues or price',
+      received: req.body
     });
   }
 
   const storeDomain = process.env.SHOPIFY_DOMAIN;
   const token = process.env.SHOPIFY_ACCESS_TOKEN;
-
-  if (!storeDomain || !token) {
-    return res.status(500).json({ 
-      error: 'Missing Shopify configuration',
-      details: 'SHOPIFY_DOMAIN and SHOPIFY_ACCESS_TOKEN must be set in environment variables'
-    });
-  }
-
-  const url = `https://${storeDomain}/admin/api/2024-04/products/${productId}/variants.json`;
+  const url = `https://${storeDomain}/admin/api/2024-01/products/${productId}/variants.json`;
 
   const variantData = {
     variant: {
@@ -214,12 +102,10 @@ app.post('/create-variant', async (req, res) => {
       option2: optionValues[1] || null,
       option3: optionValues[2] || null,
       price: price.toString(),
-      inventory_management: "shopify",
-      inventory_quantity: 1000 // Set initial inventory
+      inventory_management: 'shopify',
+      inventory_quantity: 1000
     }
   };
-
-  console.log('Creating variant with data:', JSON.stringify(variantData, null, 2));
 
   try {
     const response = await fetch(url, {
@@ -234,31 +120,19 @@ app.post('/create-variant', async (req, res) => {
     const data = await response.json();
 
     if (!response.ok) {
-      console.error('Shopify error:', data);
-      return res.status(response.status).json({ 
-        error: 'Failed to create variant', 
+      return res.status(response.status).json({
+        error: 'Failed to create variant',
         details: data,
-        shopifyStatus: response.status
+        url: url
       });
     }
 
-    console.log('Variant created successfully:', data.variant.id);
-    res.status(200).json({ 
-      message: 'Variant created successfully', 
-      variant: data.variant 
-    });
-  } catch (error) {
-    console.error('Server error:', error);
-    res.status(500).json({ 
-      error: 'Server error', 
-      details: error.message 
-    });
+    res.json({ message: 'Variant created', variant: data.variant });
+  } catch (err) {
+    res.status(500).json({ error: 'Server error', details: err.message });
   }
 });
 
 app.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);
-  console.log('Make sure these environment variables are set:');
-  console.log('- SHOPIFY_DOMAIN');
-  console.log('- SHOPIFY_ACCESS_TOKEN');
 });
