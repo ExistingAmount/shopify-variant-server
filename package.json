@@ -1,7 +1,7 @@
 {
   "name": "shopify-variant-api",
   "version": "1.0.0",
-  "description": "Custom Shopify variant creator API",
+  "description": "API to dynamically create Shopify product variants",
   "main": "server.cjs",
   "scripts": {
     "start": "node server.cjs"
