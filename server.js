@@ -12,6 +12,89 @@ app.get('/', (req, res) => {
   res.send('Variant API is live');
 });
 
+// Get product details
+app.get('/get-product/:productId', async (req, res) => {
+  const { productId } = req.params;
+  const storeDomain = process.env.SHOPIFY_DOMAIN;
+  const token = process.env.SHOPIFY_ACCESS_TOKEN;
+
+  const url = `https://${storeDomain}/admin/api/2024-01/products/${productId}.json`;
+
+  try {
+    const response = await fetch(url, {
+      headers: {
+        'X-Shopify-Access-Token': token,
+        'Content-Type': 'application/json'
+      }
+    });
+
+    const data = await response.json();
+    
+    if (!response.ok) {
+      return res.status(response.status).json({ 
+        error: 'Failed to get product', 
+        details: data 
+      });
+    }
+
+    res.json({
+      product: {
+        id: data.product.id,
+        title: data.product.title,
+        options: data.product.options,
+        variants: data.product.variants.map(v => ({
+          id: v.id,
+          title: v.title,
+          option1: v.option1,
+          option2: v.option2,
+          option3: v.option3,
+          price: v.price
+        }))
+      }
+    });
+  } catch (error) {
+    res.status(500).json({ error: 'Server error', details: error.message });
+  }
+});
+
+// List all products (first 50)
+app.get('/list-products', async (req, res) => {
+  const storeDomain = process.env.SHOPIFY_DOMAIN;
+  const token = process.env.SHOPIFY_ACCESS_TOKEN;
+
+  const url = `https://${storeDomain}/admin/api/2024-01/products.json?limit=50`;
+
+  try {
+    const response = await fetch(url, {
+      headers: {
+        'X-Shopify-Access-Token': token,
+        'Content-Type': 'application/json'
+      }
+    });
+
+    const data = await response.json();
+    
+    if (!response.ok) {
+      return res.status(response.status).json({ 
+        error: 'Failed to list products', 
+        details: data 
+      });
+    }
+
+    res.json({
+      products: data.products.map(p => ({
+        id: p.id,
+        title: p.title,
+        handle: p.handle,
+        options: p.options,
+        variant_count: p.variants.length
+      }))
+    });
+  } catch (error) {
+    res.status(500).json({ error: 'Server error', details: error.message });
+  }
+});
+
 app.post('/create-variant', async (req, res) => {
   console.log('Received request body:', req.body);
   
