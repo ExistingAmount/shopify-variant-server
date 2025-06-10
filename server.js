@@ -1,6 +1,6 @@
 const express = require('express');
 const bodyParser = require('body-parser');
-const fetch = require('node-fetch'); // Or use `node-fetch@2` if on Node 18+
+const fetch = require('node-fetch');
 require('dotenv').config();
 
 const app = express();
