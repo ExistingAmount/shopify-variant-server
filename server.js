@@ -30,7 +30,7 @@ app.get('/ping-shopify', async (req, res) => {
   }
 });
 
-// Variant creation with inventory management
+// Variant creation without inventory management
 app.post('/create-variant', async (req, res) => {
   const { optionValues, price } = req.body;
 
@@ -42,9 +42,7 @@ app.post('/create-variant', async (req, res) => {
     variant: {
       option1: optionValues[0],
       price: parseFloat(price).toFixed(2),
-      inventory_management: 'shopify',
-      inventory_quantity: 1,
-      inventory_policy: 'deny',
+      inventory_policy: 'continue',
       fulfillment_service: 'manual',
       requires_shipping: true,
       taxable: true
