@@ -1,27 +1,17 @@
 const express = require('express');
 const bodyParser = require('body-parser');
 const fetch = require('node-fetch');
+const path = require('path');
 require('dotenv').config();
 
 const app = express();
 const PORT = process.env.PORT || 10000;
 
 app.use(bodyParser.json());
+app.use(express.static(path.join(__dirname))); // Serve static files (index.html, js/, css/)
 
 app.get('/', (req, res) => {
-  res.send('Variant API is live');
-});
-
-app.get('/test-shopify', async (req, res) => {
-  const storeDomain = process.env.SHOPIFY_DOMAIN;
-  const token = process.env.SHOPIFY_ACCESS_TOKEN;
-
-  res.json({
-    domain: storeDomain,
-    tokenExists: !!token,
-    tokenLength: token ? token.length : 0,
-    envVars: Object.keys(process.env).filter(k => k.includes('SHOPIFY'))
-  });
+  res.sendFile(path.join(__dirname, 'index.html'));
 });
 
 app.get('/ping-shopify', async (req, res) => {
@@ -41,16 +31,10 @@ app.get('/ping-shopify', async (req, res) => {
     const data = await response.json();
 
     if (!response.ok) {
-      return res.status(response.status).json({
-        error: 'Failed to ping shop',
-        details: data
-      });
+      return res.status(response.status).json({ error: 'Failed to ping shop', details: data });
     }
 
-    res.json({
-      message: 'Ping successful',
-      shop: data.shop
-    });
+    res.json({ message: 'Ping successful', shop: data.shop });
   } catch (err) {
     res.status(500).json({ error: 'Server error', details: err.message });
   }
@@ -70,14 +54,11 @@ app.get('/get-product/:productId', async (req, res) => {
         'Content-Type': 'application/json'
       }
     });
+
     const data = await response.json();
 
     if (!response.ok) {
-      return res.status(response.status).json({
-        error: 'Failed to get product',
-        details: data,
-        url: url
-      });
+      return res.status(response.status).json({ error: 'Failed to get product', details: data });
     }
 
     res.json(data);
@@ -98,14 +79,11 @@ app.get('/list-products', async (req, res) => {
         'Content-Type': 'application/json'
       }
     });
+
     const data = await response.json();
 
     if (!response.ok) {
-      return res.status(response.status).json({
-        error: 'Failed to list products',
-        details: data,
-        url: url
-      });
+      return res.status(response.status).json({ error: 'Failed to list products', details: data });
     }
 
     res.json(data.products);
@@ -152,11 +130,7 @@ app.post('/create-variant', async (req, res) => {
     const data = await response.json();
 
     if (!response.ok) {
-      return res.status(response.status).json({
-        error: 'Failed to create variant',
-        details: data,
-        url: url
-      });
+      return res.status(response.status).json({ error: 'Failed to create variant', details: data });
     }
 
     res.json({ message: 'Variant created', variant: data.variant });
