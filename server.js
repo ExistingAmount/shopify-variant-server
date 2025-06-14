@@ -12,6 +12,7 @@ const SHOPIFY_ADMIN_API_URL = 'https://1b1d86-3.myshopify.com/admin/api/2024-01'
 const PRODUCT_ID = '10105912983867';
 const SHOPIFY_TOKEN = process.env.SHOPIFY_ADMIN_TOKEN;
 
+// Health check
 app.get('/ping-shopify', async (req, res) => {
   try {
     const response = await fetch(`${SHOPIFY_ADMIN_API_URL}/shop.json`, {
@@ -29,6 +30,7 @@ app.get('/ping-shopify', async (req, res) => {
   }
 });
 
+// Variant creation with inventory management
 app.post('/create-variant', async (req, res) => {
   const { optionValues, price } = req.body;
 
@@ -40,7 +42,12 @@ app.post('/create-variant', async (req, res) => {
     variant: {
       option1: optionValues[0],
       price: parseFloat(price).toFixed(2),
-      inventory_policy: 'deny'
+      inventory_management: 'shopify',
+      inventory_quantity: 1,
+      inventory_policy: 'deny',
+      fulfillment_service: 'manual',
+      requires_shipping: true,
+      taxable: true
     }
   };
 
