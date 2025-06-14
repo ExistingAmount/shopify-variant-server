@@ -21,7 +21,6 @@ app.get('/ping-shopify', async (req, res) => {
         'Content-Type': 'application/json'
       }
     });
-
     const data = await response.json();
     res.json({ message: 'Ping successful', shop: data.shop });
   } catch (err) {
@@ -30,7 +29,7 @@ app.get('/ping-shopify', async (req, res) => {
   }
 });
 
-// Variant creation without inventory management
+// Variant creation with inventory set to 100 and always continue selling
 app.post('/create-variant', async (req, res) => {
   const { optionValues, price } = req.body;
 
@@ -42,6 +41,8 @@ app.post('/create-variant', async (req, res) => {
     variant: {
       option1: optionValues[0],
       price: parseFloat(price).toFixed(2),
+      inventory_quantity: 100,
+      inventory_management: 'shopify',
       inventory_policy: 'continue',
       fulfillment_service: 'manual',
       requires_shipping: true,
