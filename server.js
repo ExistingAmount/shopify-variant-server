@@ -1,144 +1,74 @@
 const express = require('express');
 const bodyParser = require('body-parser');
+const cors = require('cors');
 const fetch = require('node-fetch');
-const path = require('path');
 require('dotenv').config();
 
 const app = express();
-const PORT = process.env.PORT || 10000;
-
+app.use(cors());
 app.use(bodyParser.json());
-app.use(express.static(path.join(__dirname))); // Serve static files (index.html, js/, css/)
 
-app.get('/', (req, res) => {
-  res.sendFile(path.join(__dirname, 'index.html'));
-});
+const SHOPIFY_ADMIN_API_URL = 'https://1b1d86-3.myshopify.com/admin/api/2024-01';
+const PRODUCT_ID = '10105912983867';
+const SHOPIFY_TOKEN = process.env.SHOPIFY_ADMIN_TOKEN;
 
 app.get('/ping-shopify', async (req, res) => {
-  const storeDomain = process.env.SHOPIFY_DOMAIN;
-  const token = process.env.SHOPIFY_ACCESS_TOKEN;
-
-  const url = `https://${storeDomain}/admin/api/2024-01/shop.json`;
-
   try {
-    const response = await fetch(url, {
+    const response = await fetch(`${SHOPIFY_ADMIN_API_URL}/shop.json`, {
       headers: {
-        'X-Shopify-Access-Token': token,
+        'X-Shopify-Access-Token': SHOPIFY_TOKEN,
         'Content-Type': 'application/json'
       }
     });
 
     const data = await response.json();
-
-    if (!response.ok) {
-      return res.status(response.status).json({ error: 'Failed to ping shop', details: data });
-    }
-
     res.json({ message: 'Ping successful', shop: data.shop });
   } catch (err) {
-    res.status(500).json({ error: 'Server error', details: err.message });
-  }
-});
-
-app.get('/get-product/:productId', async (req, res) => {
-  const { productId } = req.params;
-  const storeDomain = process.env.SHOPIFY_DOMAIN;
-  const token = process.env.SHOPIFY_ACCESS_TOKEN;
-
-  const url = `https://${storeDomain}/admin/api/2024-01/products/${productId}.json`;
-
-  try {
-    const response = await fetch(url, {
-      headers: {
-        'X-Shopify-Access-Token': token,
-        'Content-Type': 'application/json'
-      }
-    });
-
-    const data = await response.json();
-
-    if (!response.ok) {
-      return res.status(response.status).json({ error: 'Failed to get product', details: data });
-    }
-
-    res.json(data);
-  } catch (err) {
-    res.status(500).json({ error: 'Server error', details: err.message });
-  }
-});
-
-app.get('/list-products', async (req, res) => {
-  const storeDomain = process.env.SHOPIFY_DOMAIN;
-  const token = process.env.SHOPIFY_ACCESS_TOKEN;
-  const url = `https://${storeDomain}/admin/api/2024-01/products.json?limit=50`;
-
-  try {
-    const response = await fetch(url, {
-      headers: {
-        'X-Shopify-Access-Token': token,
-        'Content-Type': 'application/json'
-      }
-    });
-
-    const data = await response.json();
-
-    if (!response.ok) {
-      return res.status(response.status).json({ error: 'Failed to list products', details: data });
-    }
-
-    res.json(data.products);
-  } catch (err) {
-    res.status(500).json({ error: 'Server error', details: err.message });
+    console.error('Ping failed:', err);
+    res.status(500).json({ error: 'Ping failed', details: err.message });
   }
 });
 
 app.post('/create-variant', async (req, res) => {
-  const { productId, optionValues, price } = req.body;
+  const { optionValues, price } = req.body;
 
-  if (!productId || !optionValues || !price) {
-    return res.status(400).json({
-      error: 'Missing productId, optionValues or price',
-      received: req.body
-    });
+  if (!optionValues || optionValues.length === 0 || !price) {
+    return res.status(400).json({ error: 'Missing variant data' });
   }
 
-  const storeDomain = process.env.SHOPIFY_DOMAIN;
-  const token = process.env.SHOPIFY_ACCESS_TOKEN;
-  const url = `https://${storeDomain}/admin/api/2024-01/products/${productId}/variants.json`;
-
-  const variantData = {
+  const variant = {
     variant: {
-      option1: optionValues[0] || null,
-      option2: optionValues[1] || null,
-      option3: optionValues[2] || null,
-      price: price.toString(),
-      inventory_management: 'shopify',
-      inventory_quantity: 1000
+      option1: optionValues[0],
+      price: parseFloat(price).toFixed(2),
+      inventory_policy: 'deny'
     }
   };
 
   try {
-    const response = await fetch(url, {
+    const response = await fetch(`${SHOPIFY_ADMIN_API_URL}/products/${PRODUCT_ID}/variants.json`, {
       method: 'POST',
       headers: {
-        'X-Shopify-Access-Token': token,
+        'X-Shopify-Access-Token': SHOPIFY_TOKEN,
         'Content-Type': 'application/json'
       },
-      body: JSON.stringify(variantData)
+      body: JSON.stringify(variant)
     });
 
     const data = await response.json();
 
-    if (!response.ok) {
-      return res.status(response.status).json({ error: 'Failed to create variant', details: data });
+    if (response.ok && data.variant) {
+      res.json({ message: 'Variant created', variant: data.variant });
+    } else {
+      console.error('Variant creation failed:', data);
+      res.status(422).json({ error: 'Failed to create variant', details: data.errors || data });
     }
-
-    res.json({ message: 'Variant created', variant: data.variant });
   } catch (err) {
-    res.status(500).json({ error: 'Server error', details: err.message });
+    console.error('Server error:', err);
+    res.status(500).json({ error: 'Internal server error', details: err.message });
   }
 });
 
+const PORT = process.env.PORT || 10000;
 app.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);
 });
