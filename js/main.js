@@ -14,22 +14,20 @@ async function addToCart() {
   const zipDigit = document.querySelector('input[name="zipDigit"]:checked').value;
 
   const optionValue = `W${widthA}xB${widthB}xH${height} - Lip:${lipSize}" - EndCap:${endCap} - Zip:${zipDigit}`;
-
   const dimensionCost = (parseFloat(widthA) + parseFloat(widthB) + parseFloat(height)) * 1.9;
   const endCapCost = endCap === 'yes' ? 12.5 : 0;
 
   let shippingCost = 35;
   switch (zipDigit) {
-    case '0': shippingCost = 35; break;
     case '1': shippingCost = 25; break;
-    case '2': shippingCost = 35; break;
-    case '3': shippingCost = 45; break;
+    case '3':
     case '4': shippingCost = 45; break;
     case '5': shippingCost = 35; break;
     case '6': shippingCost = 55; break;
     case '7': shippingCost = 60; break;
     case '8': shippingCost = 65; break;
     case '9': shippingCost = 70; break;
+    default: shippingCost = 35;
   }
 
   const totalPrice = dimensionCost + endCapCost + shippingCost;
@@ -72,16 +70,15 @@ function calculateTotalCost() {
 
   let shippingCost = 35;
   switch (zipDigit) {
-    case '0': shippingCost = 35; break;
     case '1': shippingCost = 25; break;
-    case '2': shippingCost = 35; break;
-    case '3': shippingCost = 45; break;
+    case '3':
     case '4': shippingCost = 45; break;
     case '5': shippingCost = 35; break;
     case '6': shippingCost = 55; break;
     case '7': shippingCost = 60; break;
     case '8': shippingCost = 65; break;
     case '9': shippingCost = 70; break;
+    default: shippingCost = 35;
   }
 
   const total = dimensionCost + endCapCost + shippingCost;
@@ -140,12 +137,10 @@ function init() {
   document.querySelectorAll('input[name="zipDigit"]').forEach(input => {
     input.addEventListener('change', calculateTotalCost);
   });
-}
 
-function animate() {
-  requestAnimationFrame(animate);
-  controls.update();
-  renderer.render(scene, camera);
+  document.querySelectorAll('input[name="lipSize"]').forEach(input => {
+    input.addEventListener('change', drawBox);
+  });
 }
 
 function drawBox() {
@@ -163,4 +158,10 @@ function drawBox() {
   );
 
   scene.add(box);
+}
+
+function animate() {
+  requestAnimationFrame(animate);
+  controls.update();
+  renderer.render(scene, camera);
 }
